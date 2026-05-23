@@ -1,0 +1,17 @@
+homeassistant: false
+permit_join: false
+frontend:
+  port: 8080
+mqtt:
+  base_topic: zigbee2mqtt
+  server: mqtt://mqtt:1883
+
+serial:
+  port: /dev/ttyUSB0
+  adapter: ember
+
+advanced:
+  log_level: error
+  log_output:
+    - file
+  log_directory: /app/data/log
