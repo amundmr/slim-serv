@@ -1,0 +1,86 @@
+import asyncio
+import logging
+import requests
+import aiomqtt
+import json
+import logging
+from lighting import RoomController, LIVING_ROOM_SCENES
+from PIL import Image, ImageDraw
+
+# Restrict logging to errors only to save the RAM disk space
+logging.basicConfig(level=logging.ERROR)
+
+# --- CONFIGURATION ---
+MQTT_BROKER = "localhost" # Bare-metal Python can talk to mapped Docker port 1883
+EINK_MAC = "XX:XX:XX:XX:XX:XX" # Replace with your Gicisky MAC address
+# Met.no weather API (Ålesund coordinates)
+WEATHER_URL = "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=62.4722&lon=6.1549"
+
+living_room_ctrl = RoomController("Living Room", LIVING_ROOM_SCENES)
+
+
+async def eink_update_loop():
+    """Fetches weather, renders an image, and pushes it via BLE."""
+    while True:
+        try:
+            # 1. Fetch Weather Data
+            # Met.no requires a custom User-Agent
+            headers = {'User-Agent': 'rpi-slim-serv/1.0'}
+            response = requests.get(WEATHER_URL, headers=headers)
+            weather_data = response.json()
+            
+            # Extract temp (just a basic example)
+            current_temp = weather_data['properties']['timeseries'][0]['data']['instant']['details']['air_temperature']
+
+            # 2. Render Image (Example for a 250x122 display)
+            img = Image.new('1', (250, 122), 255) # '1' is 1-bit pixels, 255 is white
+            draw = ImageDraw.Draw(img)
+            draw.text((10, 10), f"Temp: {current_temp}C", fill=0) # fill=0 is black
+
+            # 3. Push to BLE (This is where you'd call your gicisky BLE push function)
+            # await push_to_display(EINK_MAC, img)
+            
+            # Sleep for 30 minutes before updating again
+            await asyncio.sleep(1800) 
+
+        except Exception as e:
+            logging.error(f"E-ink update failed: {e}")
+            await asyncio.sleep(60) # Wait a minute before retrying on failure
+
+async def zigbee_control_loop(client):
+    try:
+        await client.subscribe("zigbee2mqtt/+")
+        
+        async for message in client.messages:
+            topic = str(message.topic)
+            try:
+                payload = json.loads(message.payload.decode())
+            except json.JSONDecodeError:
+                continue
+            
+            # Route the remote clicks to our upgraded controller
+            if topic == "zigbee2mqtt/living_room_remote":
+                action = payload.get("action")
+                commands = living_room_ctrl.handle_button_press(action)
+                
+                for pub_topic, pub_payload in commands:
+                    await client.publish(pub_topic, pub_payload)
+
+    except Exception as e:
+        logging.error(f"MQTT loop failed: {e}")
+
+async def main():
+    # The async context manager automatically handles connections and clean disconnects
+    try:
+        async with aiomqtt.Client(MQTT_BROKER) as client:
+            # Run both the E-ink loop and the MQTT loop concurrently
+            await asyncio.gather(
+                eink_update_loop(),
+                zigbee_control_loop(client)
+            )
+    except aiomqtt.MqttError as error:
+         logging.error(f"MQTT connection error: {error}")
+
+if __name__ == "__main__":
+    # Start the async event loop
+    asyncio.run(main())
