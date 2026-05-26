@@ -38,11 +38,11 @@ Requires=docker.service
 
 [Service]
 Type=simple
-User=<YOUR_USERNAME>
-WorkingDirectory=/path/to/rpi-hub/python-controller
+User=amund
+WorkingDirectory=/home/amund/git/slim-serv/python-controller
 
 # Use the Python executable inside your virtual environment
-ExecStart=/path/to/rpi-hub/python-controller/venv/bin/python main.py
+ExecStart=/home/amund/git/slim-serv/python-controller/venv/bin/python main.py
 
 # Bulletproof restarting
 Restart=always

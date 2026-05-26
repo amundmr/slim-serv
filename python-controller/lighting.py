@@ -5,12 +5,12 @@ import logging
 # Map each scene to the exact payload required by that specific hardware.
 LIVING_ROOM_SCENES = {
     "off": {
-        "corner_plug": {"state": "OFF"},
+        "shelf_plug": {"state": "OFF"},
         "aqara_bulb": {"state": "OFF"},
         "nobrand_rgb": {"state": "OFF"}
     },
     "cosy": {
-        "corner_plug": {"state": "ON"},
+        "shelf_plug": {"state": "ON"},
         "aqara_bulb": {
             "state": "ON", 
             "brightness": 100, 
@@ -24,7 +24,7 @@ LIVING_ROOM_SCENES = {
         }
     },
     "full": {
-        "corner_plug": {"state": "ON"},
+        "shelf_plug": {"state": "ON"},
         "aqara_bulb": {
             "state": "ON", 
             "brightness": 254, 
