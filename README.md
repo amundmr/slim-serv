@@ -1,7 +1,7 @@
 # slim-serv
 A barebones lightweight home server setup for direct zigbee and weather-to-eink control.
 
-Gemini thread: https://gemini.google.com/app/19532e3002d5c8b9
+Zigbee2MQTT runs in docker. A simple Python script that gives full access to set states in Z2M based on its outputs runs in systemctl.
 
 
 # Pairing Devices
