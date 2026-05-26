@@ -6,34 +6,35 @@ import logging
 LIVING_ROOM_SCENES = {
     "off": {
         "shelf_plug": {"state": "OFF"},
-        "aqara_bulb": {"state": "OFF"},
-        "nobrand_rgb": {"state": "OFF"}
+        "tv_bulb": {"state": "OFF"},
+        "couch_bulb": {"state": "OFF"}
     },
     "cosy": {
         "shelf_plug": {"state": "ON"},
-        "aqara_bulb": {
+        "tv_bulb": {
+            "state": "ON", 
+            "brightness": 180, 
+            "color_temp": 370 
+        },
+        "couch_bulb": {
+            "color_mode": "color_temp",
+            "color_temp": 500,
             "state": "ON", 
             "brightness": 100, 
-            "color_temp": 400
-        },
-        "nobrand_rgb": {
-            "state": "ON", 
-            "brightness": 80, 
-            # Note: Z2M expects RGB as a nested object
-            "color": {"r": 255, "g": 140, "b": 50} 
+            "color": {"hue": 25, "saturation": 95}  
         }
     },
     "full": {
         "shelf_plug": {"state": "ON"},
-        "aqara_bulb": {
+        "tv_bulb": {
             "state": "ON", 
-            "brightness": 254, 
-            "color_temp": 250
+            "brightness": 255, 
+            "color_temp": 153  
         },
-        "nobrand_rgb": {
+        "couch_bulb": {
             "state": "ON", 
             "brightness": 254, 
-            "color": {"r": 255, "g": 255, "b": 255}
+            "color_temp": 250  
         }
     }
 }

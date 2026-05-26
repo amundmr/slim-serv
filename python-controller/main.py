@@ -57,17 +57,22 @@ async def zigbee_control_loop(client):
             topic = str(message.topic)
             payload_str = message.payload.decode().strip()
             
-            # 1. Handle incoming JSON from a real physical Zigbee remote
-            if topic == "zigbee2mqtt/living_room_remote":
+            # 1. Handle incoming JSON from physical Zigbee remotes/switches
+            if topic in ["zigbee2mqtt/living_room_remote", "zigbee2mqtt/shelf_switch"]:
                 try:
                     payload = json.loads(payload_str)
-                    action = payload.get("action") # e.g. "single", "double"
+                    action = payload.get("action")  # Grabs "single", "double", etc.
+                    
+                    # Xiaomi switches sometimes send an empty action on release.
+                    # This line ensures we ignore the blank noise and only act on real clicks!
+                    if not action:
+                        continue
+                        
                 except json.JSONDecodeError:
                     continue
             
             # 2. Handle a raw string sent to our virtual python switch topic
             elif topic == "home/switch/living_room":
-                # Expecting raw strings here like "single" or "double"
                 action = payload_str
             
             else:
@@ -82,6 +87,7 @@ async def zigbee_control_loop(client):
 
     except Exception as e:
         logging.error(f"MQTT loop failed: {e}")
+
 
 async def main():
     # The async context manager automatically handles connections and clean disconnects

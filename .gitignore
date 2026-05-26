@@ -216,3 +216,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+get-docker.sh
+zigbee2mqtt/configuration_backup_v1.yaml
+zigbee2mqtt/configuration_backup_v2.yaml
+zigbee2mqtt/configuration_backup_v3.yaml
+zigbee2mqtt/configuration_backup_v4.yaml
+zigbee2mqtt/coordinator_backup.json
+zigbee2mqtt/database.db
+zigbee2mqtt/state.json

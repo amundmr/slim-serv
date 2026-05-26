@@ -18,3 +18,9 @@ version: 5
 devices:
   '0xa4c13833b8914505':
     friendly_name: shelf_plug
+  '0x00158d000689a12f':
+    friendly_name: tv_bulb
+  '0xb40ecfd13faa0000':
+    friendly_name: couch_bulb
+  '0x00158d0002048d29':
+    friendly_name: shelf_switch
