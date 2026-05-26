@@ -1,17 +1,20 @@
-homeassistant: false
-permit_join: false
+homeassistant:
+  enabled: false
 frontend:
+  enabled: true
   port: 8080
 mqtt:
   base_topic: zigbee2mqtt
   server: mqtt://mqtt:1883
-
 serial:
   port: /dev/ttyUSB0
   adapter: ember
-
 advanced:
   log_level: error
   log_output:
     - file
-  log_directory: /app/data/log
+  log_directory: /ramdisk_logs
+version: 5
+devices:
+  '0xa4c13833b8914505':
+    friendly_name: shelf_plug
