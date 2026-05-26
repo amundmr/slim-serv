@@ -24,3 +24,5 @@ devices:
     friendly_name: couch_bulb
   '0x00158d0002048d29':
     friendly_name: shelf_switch
+  '0xa4c13868247e7902':
+    friendly_name: thermometer

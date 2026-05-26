@@ -1,51 +1,57 @@
 import asyncio
 import logging
+import datetime
 import requests
 import aiomqtt
 import json
-import logging
 from lighting import RoomController, LIVING_ROOM_SCENES
-from PIL import Image, ImageDraw
+from weather_renderer import render_weather_display
+from ble_pusher import fetch_weather, scan_for_tag, TAG_MAC, SCAN_TIMEOUT
+from gicisky_ble.writer import update_image
 
 # Restrict logging to errors only to save the RAM disk space
 logging.basicConfig(level=logging.ERROR)
 
 # --- CONFIGURATION ---
-MQTT_BROKER = "localhost" # Bare-metal Python can talk to mapped Docker port 1883
-EINK_MAC = "XX:XX:XX:XX:XX:XX" # Replace with your Gicisky MAC address
-# Met.no weather API (Ålesund coordinates)
-WEATHER_URL = "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=62.4722&lon=6.1549"
+MQTT_BROKER = "localhost"
 
 living_room_ctrl = RoomController("Living Room", LIVING_ROOM_SCENES)
 
 
+def _seconds_until_6am() -> float:
+    now = datetime.datetime.now()
+    target = now.replace(hour=6, minute=0, second=0, microsecond=0)
+    if now >= target:
+        target += datetime.timedelta(days=1)
+    return (target - now).total_seconds()
+
+
 async def eink_update_loop():
-    """Fetches weather, renders an image, and pushes it via BLE."""
+    """Fetches weather and pushes to the e-ink display every day at 06:00."""
     while True:
+        wait = _seconds_until_6am()
+        logging.info(f"Next e-ink update in {wait / 3600:.1f}h")
+        await asyncio.sleep(wait)
         try:
-            # 1. Fetch Weather Data
-            # Met.no requires a custom User-Agent
-            headers = {'User-Agent': 'rpi-slim-serv/1.0'}
-            response = requests.get(WEATHER_URL, headers=headers)
-            weather_data = response.json()
-            
-            # Extract temp (just a basic example)
-            current_temp = weather_data['properties']['timeseries'][0]['data']['instant']['details']['air_temperature']
-
-            # 2. Render Image (Example for a 250x122 display)
-            img = Image.new('1', (250, 122), 255) # '1' is 1-bit pixels, 255 is white
-            draw = ImageDraw.Draw(img)
-            draw.text((10, 10), f"Temp: {current_temp}C", fill=0) # fill=0 is black
-
-            # 3. Push to BLE (This is where you'd call your gicisky BLE push function)
-            # await push_to_display(EINK_MAC, img)
-            
-            # Sleep for 30 minutes before updating again
-            await asyncio.sleep(1800) 
-
+            met_data = fetch_weather()
+            image = render_weather_display(met_data)
+            ble_device, device_entry = await scan_for_tag(TAG_MAC, SCAN_TIMEOUT)
+            if ble_device is None or device_entry is None:
+                logging.error("E-ink update: tag not found or not in update mode")
+                continue
+            success = await update_image(
+                ble_device=ble_device,
+                device=device_entry,
+                image=image,
+                threshold=128,
+                red_threshold=128,
+                attempt=1,
+                write_delay_ms=20,
+            )
+            if not success:
+                logging.error("E-ink update: BLE write failed")
         except Exception as e:
             logging.error(f"E-ink update failed: {e}")
-            await asyncio.sleep(60) # Wait a minute before retrying on failure
 
 async def zigbee_control_loop(client):
     try:
